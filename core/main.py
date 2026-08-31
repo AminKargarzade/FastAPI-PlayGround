@@ -1,4 +1,4 @@
-from fastapi import Body, FastAPI, status, HTTPException
+from fastapi import Body, FastAPI, Query, status, HTTPException
 from fastapi.responses import JSONResponse
 import random
 
@@ -16,6 +16,24 @@ def create_expense(expense: str = Body(...), amount: float = Body(...)):
     expense_obj = {"id": random.randint(1, 1000), "description": expense, "amount": amount}  # type: ignore
     expenses_db.append(expense_obj)  # type: ignore
     return expense_obj
+
+
+@app.get("/expenses")
+def retrieve_expense_list(
+    q: str | None = Query(
+        alias="search",
+        description="it will be searched with the expense you provided",
+        example="Rent",
+        default=None,
+        max_length=50,
+    )
+):
+
+    if q:
+        return [
+            item for item in expenses_db if item["description"] == q
+        ]  # [operation iteration condition]
+    return expenses_db
 
 
 @app.get("/")
