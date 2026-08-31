@@ -1,4 +1,4 @@
-from fastapi import Body, FastAPI, Query, status, HTTPException
+from fastapi import Body, FastAPI, Path, Query, status, HTTPException
 from fastapi.responses import JSONResponse
 import random
 
@@ -34,6 +34,22 @@ def retrieve_expense_list(
             item for item in expenses_db if item["description"] == q
         ]  # [operation iteration condition]
     return expenses_db
+
+
+@app.get("/expenses/{expense_id}")
+def retrieve_expense(
+    expense_id: int = Path(
+        alias="expense_id",
+        title="expense id",
+        description="the ID of the expense in expenses_db",
+    )
+):
+    for expense in expenses_db:
+        if expense["id"] == expense_id:
+            return expense
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found"
+    )
 
 
 @app.get("/")
