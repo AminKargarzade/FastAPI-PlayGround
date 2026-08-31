@@ -64,7 +64,8 @@ def update_expense_detail(
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found"
     )
-    
+
+
 @app.delete("/expenses/{expense_id}")
 def delete_expense(expense_id: int):
     for exp in expenses_db:
@@ -77,6 +78,7 @@ def delete_expense(expense_id: int):
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found"
     )
+
 
 @app.get("/")
 async def read_root():
