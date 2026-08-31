@@ -52,6 +52,20 @@ def retrieve_expense(
     )
 
 
+@app.put("/expenses/{expense_id}", status_code=status.HTTP_200_OK)
+def update_expense_detail(
+    expense_id: int, expense: str = Body(...), amount: float = Body(...)
+):
+    for exp in expenses_db:
+        if exp["id"] == expense_id:
+            exp["description"] = expense
+            exp["amount"] = amount
+            return exp
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found"
+    )
+
+
 @app.get("/")
 async def read_root():
     return {"Hello": "World"}
