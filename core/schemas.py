@@ -24,11 +24,12 @@ class BaseExpenseSchema(BaseModel):
 
 
 class ExpenseCreateSchema(BaseExpenseSchema):
-    pass
+    user_id: int
 
 
 class ExpenseResponseSchema(BaseExpenseSchema):
     id: int = Field(..., description="Unique identifier for the expense")
+    user_id: int
 
 
 class ExpenseUpdateSchema(BaseModel):
