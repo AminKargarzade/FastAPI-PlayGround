@@ -1,12 +1,15 @@
-from pydantic import BaseModel, Field, field_validator, field_serializer
+from pydantic import BaseModel, ConfigDict, Field, field_validator, field_serializer
+from typing import Optional
+from datetime import datetime
 
 
 class BaseExpenseSchema(BaseModel):
     description: str = Field(
-        ..., description="Enter Expense Description", min_length=1, max_length=50
+        ..., description="Enter Expense Description", min_length=1, max_length=500
     )
 
     amount: float = Field(..., description="Enter Expense Amount", gt=0)
+    is_paid: bool = Field(..., description="Indicates if the expense is paid")
 
     @field_validator("description")
     @classmethod
@@ -24,18 +27,30 @@ class BaseExpenseSchema(BaseModel):
 
 
 class ExpenseCreateSchema(BaseExpenseSchema):
-    user_id: int
+    pass
 
 
 class ExpenseResponseSchema(BaseExpenseSchema):
+    model_config = ConfigDict(from_attributes=True)
     id: int = Field(..., description="Unique identifier for the expense")
     user_id: int
 
+    created_date: datetime = Field(
+        ..., description="The timestamp when the expense was created"
+    )
+    updated_date: datetime = Field(
+        ..., description="The timestamp when the expense was last updated"
+    )
+
 
 class ExpenseUpdateSchema(BaseModel):
-    description: str | None = Field(default=None, max_length=50)
+    description: str | None = Field(default=None, max_length=500, min_length=1)
 
     amount: float | None = Field(default=None, gt=0)
+
+    is_paid: bool | None = Field(
+        default=None, description="Indicates if the expense is paid"
+    )
 
     @field_validator("description")
     @classmethod
