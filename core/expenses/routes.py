@@ -11,9 +11,6 @@ from auth.jwt_coockie_auth import get_authenticated_user
 app = FastAPI()
 
 
-
-
-
 @app.post(
     "/expenses",
     status_code=status.HTTP_201_CREATED,
