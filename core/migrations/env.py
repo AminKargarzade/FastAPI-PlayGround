@@ -5,6 +5,12 @@ from sqlalchemy import pool
 from core.database import Base
 from alembic import context
 
+from core.database import Base
+
+# Import models so SQLAlchemy registers their tables in Base.metadata
+from users.models import UserModel
+from expenses.models import ExpenseModel
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
