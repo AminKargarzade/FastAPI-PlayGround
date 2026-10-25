@@ -27,4 +27,4 @@ class ExpenseModel(Base):
     created_date = Column(DateTime, server_default=func.now())
     updated_date = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
-    user = relationship("UserModel", back_populates="expenses", userlist=False)
+    user = relationship("UserModel", back_populates="expenses", uselist=False)

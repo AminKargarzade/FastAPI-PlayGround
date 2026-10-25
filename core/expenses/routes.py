@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, Path, Query, status, HTTPException
+from fastapi import APIRouter, Depends, FastAPI, Path, Query, status, HTTPException
 from fastapi.responses import JSONResponse
 from expenses.schemas import *
 from expenses.models import ExpenseModel
@@ -6,12 +6,12 @@ from users.models import UserModel
 from core.database import get_db
 from typing import List
 from sqlalchemy.orm import Session
-from auth.jwt_coockie_auth import get_authenticated_user
+from auth.jwt_cookie_auth import get_authenticated_user
 
-app = FastAPI()
+router = APIRouter(tags=["expenses"])
 
 
-@app.post(
+@router.post(
     "/expenses",
     status_code=status.HTTP_201_CREATED,
     response_model=ExpenseResponseSchema,
@@ -27,7 +27,7 @@ def create_expense(request: ExpenseCreateSchema, db: Session = Depends(get_db)):
     return new_expense
 
 
-@app.get("/expenses", response_model=list[ExpenseResponseSchema])
+@router.get("/expenses", response_model=list[ExpenseResponseSchema])
 def retrieve_expense_list(
     search: str | None = Query(
         description="it will be searched with the expense you provided",
@@ -37,7 +37,7 @@ def retrieve_expense_list(
     ),
     db: Session = Depends(get_db),
 ):
-    query = db.query(Expense)
+    query = db.query(ExpenseModel)
 
     if search:
         query = query.filter_by(description=search)
@@ -45,7 +45,7 @@ def retrieve_expense_list(
     return result
 
 
-@app.get("/expenses/{expense_id}", response_model=ExpenseResponseSchema)
+@router.get("/expenses/{expense_id}", response_model=ExpenseResponseSchema)
 def retrieve_expense(
     expense_id: int = Path(
         title="expense id",
@@ -53,7 +53,7 @@ def retrieve_expense(
     ),
     db: Session = Depends(get_db),
 ):
-    expense = db.query(Expense).filter_by(id=expense_id).one_or_none()
+    expense = db.query(ExpenseModel).filter_by(id=expense_id).one_or_none()
     if expense:
         return expense
     else:
@@ -62,7 +62,7 @@ def retrieve_expense(
         )
 
 
-@app.put(
+@router.put(
     "/expenses/{expense_id}",
     status_code=status.HTTP_200_OK,
     response_model=ExpenseResponseSchema,
@@ -72,7 +72,7 @@ def update_expense_detail(
     expense_id: int = Path(..., title="expense id"),
     db: Session = Depends(get_db),
 ):
-    expense = db.query(Expense).filter_by(id=expense_id).one_or_none()
+    expense = db.query(ExpenseModel).filter_by(id=expense_id).one_or_none()
 
     if not expense:
         raise HTTPException(
@@ -89,12 +89,12 @@ def update_expense_detail(
     return expense
 
 
-@app.delete("/expenses/{expense_id}")
+@router.delete("/expenses/{expense_id}")
 def delete_expense(
     expense_id: int,
     db: Session = Depends(get_db),
 ):
-    expense = db.query(Expense).filter_by(id=expense_id).one_or_none()
+    expense = db.query(ExpenseModel).filter_by(id=expense_id).one_or_none()
     if expense:
         db.delete(expense)
         db.commit()
@@ -106,8 +106,3 @@ def delete_expense(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found"
         )
-
-
-@app.get("/")
-async def read_root():
-    return {"Hello": "World"}

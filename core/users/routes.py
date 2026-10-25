@@ -1,67 +1,107 @@
-from fastapi import APIRouter, Path, Depends, HTTPException, Query, status
-from fastapi.responses import JSONResponse
-from users.schemas import *
-from users.models import UserModel
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
+
+from users.schemas import UserLoginSchema, UserRegisterSchema
+from users.models import UserModel
 from core.database import get_db
-from typing import List
-import secrets
-from auth.jwt_auth import (
+from core.config import settings
+from auth.cookies import set_auth_cookies, clear_auth_cookies
+from auth.jwt_cookie_auth import (
     generate_access_token,
-    generate_refresh_token,
     decode_refresh_token,
 )
 
-router = APIRouter(tags=["users"], prefix="/users")
+router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-
-def generate_token(length: int = 32) -> str:
-    """Generates a secure random token."""
-    return secrets.token_hex(length)
+ACCESS_TOKEN_EXPIRE = 60 * 5
 
 
 @router.post("/login")
-async def user_login(request: UserLoginSchema, db: Session = Depends(get_db)):
+def user_login(
+    request: UserLoginSchema,
+    response: Response,
+    db: Session = Depends(get_db),
+):
     user_obj = db.query(UserModel).filter_by(username=request.username.lower()).first()
-    if not user_obj:
+
+    # Use a generic message for invalid credentials.
+    if not user_obj or not user_obj.verify_password(request.password):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="User Does NOT Exist!"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password",
         )
-    if not user_obj.verify_password(request.password):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Password is Invalid(histiric)",
-        )
-    access_token = generate_access_token(user_obj.id)  # type: ignore
-    refresh_token = generate_refresh_token(user_obj.id)  # type: ignore
-    return JSONResponse(
-        content={
-            "detail": "User Logged In Successfully!",
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-        }
-    )
+
+    set_auth_cookies(response, user_obj.id)
+
+    return {"detail": "User logged in successfully"}
 
 
-@router.post("/register")
-async def user_register(request: UserRegisterSchema, db: Session = Depends(get_db)):
-    if db.query(UserModel).filter_by(username=request.username.lower()).first():
+@router.post("/register", status_code=status.HTTP_201_CREATED)
+def user_register(
+    request: UserRegisterSchema,
+    db: Session = Depends(get_db),
+):
+    username = request.username.lower()
+
+    if db.query(UserModel).filter_by(username=username).first():
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="Username Already Exists!"
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Username already exists",
         )
-    user_obj = UserModel(username=request.username.lower())
+
+    user_obj = UserModel(username=username)
     user_obj.set_password(request.password)
+
     db.add(user_obj)
     db.commit()
-    return JSONResponse(content={"detail": "User Registered Successfully!"})
+
+    return {"detail": "User registered successfully"}
 
 
 @router.post("/refresh-token")
-async def user_refresh_token(
-    request: UserRefreshTokenSchema, db: Session = Depends(get_db)
+def user_refresh_token(
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
 ):
-    # user_obj = decode_refresh_token(request.token, db=db) or we have other way
-    user_id = decode_refresh_token(request.token)
+    refresh_token = request.cookies.get("refresh_token")
 
-    access_token = generate_access_token(user_id)
-    return JSONResponse(content={"access_token": access_token})
+    if not refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token is missing",
+        )
+
+    user_id = decode_refresh_token(refresh_token)
+
+    user_obj = db.query(UserModel).filter_by(id=user_id).first()
+
+    if user_obj is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+        )
+
+    new_access_token = generate_access_token(
+        user_obj.id,
+        expires_in=ACCESS_TOKEN_EXPIRE,
+    )
+
+    response.set_cookie(
+        key="access_token",
+        value=new_access_token,
+        max_age=ACCESS_TOKEN_EXPIRE,
+        httponly=True,
+        secure=settings.COOKIE_SECURE,
+        samesite="lax",
+        path="/",
+    )
+
+    return {"detail": "Access token refreshed successfully"}
+
+
+@router.post("/logout")
+def user_logout(response: Response):
+    clear_auth_cookies(response)
+
+    return {"detail": "Logged out successfully"}
