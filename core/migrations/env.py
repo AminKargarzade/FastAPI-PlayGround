@@ -1,18 +1,30 @@
 from logging.config import fileConfig
-
+import sys
+from pathlib import Path
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from alembic import context
-
-from core.database import Base
-
-# Import models so SQLAlchemy registers their tables in Base.metadata
+from core.config import settings
+from core.database import (
+    Base,
+)  # Import models so SQLAlchemy registers their tables in Base.metadata
 from users.models import UserModel  # noqa: F401
 from expenses.models import ExpenseModel  # noqa: F401
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_CORE_DIR = PROJECT_ROOT / "core"
+
+sys.path.insert(0, str(PROJECT_CORE_DIR))
+sys.path.insert(0, str(PROJECT_ROOT))
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+config.set_main_option(
+    "sqlalchemy.url",
+    settings.SQLALCHEMY_DATABASE_URL.replace("%", "%%"),
+)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
