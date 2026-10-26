@@ -31,7 +31,11 @@ def user_login(
             detail="Invalid username or password",
         )
 
-    set_auth_cookies(response, user_obj.id)
+    set_auth_cookies(
+        response,
+        user_obj.id,
+        token_version=user_obj.token_version,
+    )
 
     return {"detail": "User logged in successfully"}
 
@@ -72,19 +76,20 @@ def user_refresh_token(
             detail="Refresh token is missing",
         )
 
-    user_id = decode_refresh_token(refresh_token)
+    user_id, token_version = decode_refresh_token(refresh_token)
 
     user_obj = db.query(UserModel).filter_by(id=user_id).first()
 
-    if user_obj is None:
+    if user_obj is None or user_obj.token_version != token_version:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
+            detail="Refresh token has been revoked",
         )
 
     new_access_token = generate_access_token(
         user_obj.id,
         expires_in=ACCESS_TOKEN_EXPIRE,
+        token_version=user_obj.token_version,
     )
 
     response.set_cookie(
@@ -101,7 +106,26 @@ def user_refresh_token(
 
 
 @router.post("/logout")
-def user_logout(response: Response):
+def user_logout(
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    refresh_token = request.cookies.get("refresh_token")
+
+    if refresh_token:
+        try:
+            user_id, token_version = decode_refresh_token(refresh_token)
+
+            user_obj = db.query(UserModel).filter_by(id=user_id).first()
+
+            if user_obj and user_obj.token_version == token_version:
+                user_obj.token_version += 1
+                db.commit()
+
+        except HTTPException:
+            db.rollback()
+
     clear_auth_cookies(response)
 
     return {"detail": "Logged out successfully"}

@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, Response, Request
+from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from expenses.routes import router as expenses_routes
 from users.routes import router as users_routes

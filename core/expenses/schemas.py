@@ -1,5 +1,4 @@
 from pydantic import BaseModel, ConfigDict, Field, field_validator, field_serializer
-from typing import Optional
 from datetime import datetime
 
 
@@ -9,7 +8,7 @@ class BaseExpenseSchema(BaseModel):
     )
 
     amount: float = Field(..., description="Enter Expense Amount", gt=0)
-    is_paid: bool = Field(..., description="Indicates if the expense is paid")
+    is_paid: bool = Field(default=False, description="Indicates if the expense is paid")
 
     @field_validator("description")
     @classmethod

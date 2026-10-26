@@ -13,15 +13,21 @@ REFRESH_TOKEN_EXPIRE = 60 * 60 * 24
 COOKIE_SECURE = settings.COOKIE_SECURE
 
 
-def set_auth_cookies(response: Response, user_id: int) -> None:
+def set_auth_cookies(
+    response: Response,
+    user_id: int,
+    token_version: int = 0,
+) -> None:
     access_token = generate_access_token(
         user_id,
         expires_in=ACCESS_TOKEN_EXPIRE,
+        token_version=token_version,
     )
 
     refresh_token = generate_refresh_token(
         user_id,
         expires_in=REFRESH_TOKEN_EXPIRE,
+        token_version=token_version,
     )
 
     response.set_cookie(

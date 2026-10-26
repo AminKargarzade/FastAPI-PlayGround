@@ -1,12 +1,9 @@
-from datetime import datetime
 from sqlalchemy import (
     ForeignKey,
     Numeric,
     Text,
-    create_engine,
     Column,
     Integer,
-    String,
     Boolean,
     DateTime,
     func,

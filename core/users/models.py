@@ -12,6 +12,7 @@ class UserModel(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(250), nullable=False, unique=True)
     password = Column(String, nullable=False)
+    token_version = Column(Integer, nullable=False, default=0)
 
     is_active = Column(Boolean, default=True)
 

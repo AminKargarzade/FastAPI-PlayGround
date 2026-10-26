@@ -2,14 +2,13 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-from core.database import Base
 from alembic import context
 
 from core.database import Base
 
 # Import models so SQLAlchemy registers their tables in Base.metadata
-from users.models import UserModel
-from expenses.models import ExpenseModel
+from users.models import UserModel  # noqa: F401
+from expenses.models import ExpenseModel  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
