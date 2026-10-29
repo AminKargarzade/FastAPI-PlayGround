@@ -1,3 +1,5 @@
+from gettext import NullTranslations
+
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from expenses.routes import router as expenses_routes
@@ -48,6 +50,6 @@ app.include_router(users_routes)
 
 @app.get("/health", tags=["System"])
 def health_check(
-    translator: Annotated[object, Depends(get_language)],
+    translator: Annotated[NullTranslations, Depends(get_language)],
 ):
     return {"message": translator.gettext("Service is healthy")}  # type: ignore

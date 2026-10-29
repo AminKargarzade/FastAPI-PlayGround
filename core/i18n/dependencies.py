@@ -1,4 +1,5 @@
 from typing import Annotated
+from gettext import NullTranslations
 
 from fastapi import Depends, Query, Request
 
@@ -13,39 +14,20 @@ def resolve_language(
     request: Request,
     lang: Annotated[str | None, Query()] = None,
 ) -> str:
-    """
-    Resolve the request language.
-
-    Priority:
-    1. Query parameter: ?lang=fa
-    2. Accept-Language header
-    3. Default language
-    """
     if lang is not None:
         normalized = lang.strip().lower()
-
-        if normalized in SUPPORTED_LANGUAGES:
-            return normalized
-
-        return DEFAULT_LANGUAGE
+        return normalized if normalized in SUPPORTED_LANGUAGES else DEFAULT_LANGUAGE
 
     accept_language = request.headers.get("Accept-Language", "")
-
-    # Parse language tags and their optional quality values.
     candidates = []
 
     for item in accept_language.split(","):
         parts = item.strip().split(";")
         language_tag = parts[0].strip().lower()
-
-        if not language_tag:
-            continue
-
         quality = 1.0
 
         for parameter in parts[1:]:
             parameter = parameter.strip()
-
             if parameter.startswith("q="):
                 try:
                     quality = float(parameter[2:])
@@ -55,18 +37,16 @@ def resolve_language(
         if not 0.0 <= quality <= 1.0:
             quality = 0.0
 
-        candidates.append((language_tag, quality))
+        if language_tag:
+            candidates.append((language_tag, quality))
 
-    # Prefer higher quality values, preserving header order for ties.
     candidates.sort(key=lambda item: item[1], reverse=True)
 
     for language_tag, quality in candidates:
         if quality == 0:
             continue
 
-        # Support tags such as fa-IR and en-US.
         primary_language = language_tag.split("-")[0]
-
         if primary_language in SUPPORTED_LANGUAGES:
             return primary_language
 
@@ -75,6 +55,5 @@ def resolve_language(
 
 def get_language(
     language: Annotated[str, Depends(resolve_language)],
-):
-    """Provide a translator for the selected request language."""
+) -> NullTranslations:
     return get_translator(language)

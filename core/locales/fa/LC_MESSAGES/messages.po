@@ -20,3 +20,30 @@ msgstr "هزینه پیدا نشد"
 
 msgid "Invalid language"
 msgstr "زبان نامعتبر است"
+
+msgid "Expense deleted successfully"
+msgstr "هزینه با موفقیت حذف شد"
+
+msgid "Invalid username or password"
+msgstr "نام کاربری یا رمز عبور اشتباه است"
+
+msgid "Username already exists"
+msgstr "این نام کاربری قبلاً ثبت شده است"
+
+msgid "Refresh token is missing"
+msgstr "توکن تمدید وجود ندارد"
+
+msgid "Refresh token has been revoked"
+msgstr "توکن تمدید باطل شده است"
+
+msgid "Access token refreshed successfully"
+msgstr "توکن دسترسی با موفقیت تمدید شد"
+
+msgid "Logged out successfully"
+msgstr "با موفقیت خارج شدید"
+
+msgid "User logged in successfully"
+msgstr "ورود با موفقیت انجام شد"
+
+msgid "User registered successfully"
+msgstr "ثبت‌نام با موفقیت انجام شد"
