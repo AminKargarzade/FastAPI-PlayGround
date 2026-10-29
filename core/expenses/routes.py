@@ -10,6 +10,8 @@ from expenses.schemas import (
     ExpenseResponseSchema,
     ExpenseUpdateSchema,
 )
+from i18n.dependencies import get_language
+from gettext import NullTranslations
 
 router = APIRouter(tags=["Expenses"])
 
@@ -67,6 +69,7 @@ def retrieve_expense(
     expense_id: int = Path(..., title="Expense ID", gt=0),
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_authenticated_user),
+    translator: NullTranslations = Depends(get_language),
 ):
     expense = (
         db.query(ExpenseModel)
@@ -80,7 +83,7 @@ def retrieve_expense(
     if expense is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Expense not found",
+            detail=translator.gettext("Expense not found"),
         )
 
     return expense
@@ -95,6 +98,7 @@ def update_expense_detail(
     expense_id: int = Path(..., title="Expense ID", gt=0),
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_authenticated_user),
+    translator: NullTranslations = Depends(get_language),
 ):
     expense = (
         db.query(ExpenseModel)
@@ -108,7 +112,7 @@ def update_expense_detail(
     if expense is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Expense not found",
+            detail=translator.gettext("Expense not found"),
         )
 
     update_data = request.model_dump(exclude_unset=True)
@@ -130,6 +134,7 @@ def delete_expense(
     expense_id: int = Path(..., title="Expense ID", gt=0),
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_authenticated_user),
+    translator: NullTranslations = Depends(get_language),
 ):
     expense = (
         db.query(ExpenseModel)
@@ -149,4 +154,4 @@ def delete_expense(
     db.delete(expense)
     db.commit()
 
-    return {"message": "Expense deleted successfully"}
+    return {"message": translator.gettext("Expense deleted successfully")}
